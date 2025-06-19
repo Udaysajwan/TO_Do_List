@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time-Based Task Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #b45309;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(255, 183, 77, 0.15);
+            border: 1px solid #ffd580;
+        }
+        
+        h1 {
+            color: #fb923c;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px #ffedd5;
+        }
+        
+        .time-display {
+            font-size: 3.5rem;
+            color: #fdba74;
+            font-weight: 600;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 15px #ffedd5;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+        
+        @media (min-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .panel {
+            background: #fff7ed;
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(255, 183, 77, 0.10);
+            border: 1px solid #ffd580;
+            padding: 25px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 40px rgba(255, 183, 77, 0.18);
+        }
+        
+        .panel-title {
+            margin-bottom: 20px;
+            color: #fb923c;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #ffd580;
+        }
+        
+        .panel-title i {
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #fb923c;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 14px;
+            background: #fff;
+            border: 1px solid #ffd580;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            color: #b45309;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #fb923c;
+            box-shadow: 0 0 0 3px #ffedd5;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #fb923c, #fdba74);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #f97316, #fb923c);
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #fbbf24, #f59e42);
+            color: #b45309;
+        }
+        
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #f59e42, #fbbf24);
+        }
+        
+        .tasks-container {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        
+        .task-list {
+            list-style: none;
+        }
+        
+        .task-item {
+            background: #fff;
+            border-left: 4px solid #fb923c;
+            color: #b45309;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .task-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .task-item.urgent {
+            border-left-color: #ef4444;
+            background: rgba(30, 41, 59, 0.8);
+        }
+        
+        .task-item.urgent::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            animation: pulse-glow 2s infinite;
+        }
+        
+        .task-title {
+            color: #b45309;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .task-desc {
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+        
+        .task-time {
+            color: #fb923c;
+            font-weight: 500;
+        }
+        
+        .task-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .btn-icon {
+            background: rgba(30, 41, 59, 0.9);
+            color: #94a3b8;
+            border: none;
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 8px;
+            border-radius: 10px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .btn-icon:hover {
+            background: rgba(51, 65, 85, 0.9);
+            color: #60a5fa;
+            transform: scale(1.1);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #fbbf24;
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #334155;
+        }
+        
+        .alert-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 4px 12px;
+            border-radius: 20px;
+            animation: pulse 1.5s infinite;
+            z-index: 10;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes pulse-glow {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(30, 41, 59, 0.95);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            border-left: 4px solid #ef4444;
+            transform: translateX(120%);
+            transition: transform 0.4s ease-out;
+            max-width: 350px;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ef4444;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-content {
+            margin-bottom: 10px;
+            color: #e2e8f0;
+            line-height: 1.5;
+        }
+        
+        .notification-time {
+            color: #93c5fd;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .notification-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #94a3b8;
+            transition: color 0.3s;
+        }
+        
+        .notification-close:hover {
+            color: #60a5fa;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 20px;
+            color: #f59e42;
+            font-size: 0.9rem;
+        }
+        
+        /* Custom scrollbar */
+        .tasks-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .tasks-container::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 4px;
+        }
+        
+        .tasks-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            border-radius: 4px;
+        }
+        
+        .tasks-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-clock"></i> Time-Based Task Manager</h1>
+            <div class="time-display" id="currentTime">00:00:00</div>
+        </header>
+        
+        <div class="app-container">
+            <div class="panel">
+                <h2 class="panel-title"><i class="fas fa-plus-circle"></i> Add New Task</h2>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">Task Title</label>
+                        <input type="text" id="taskTitle" placeholder="What do you need to do?" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskDescription">Description (Optional)</label>
+                        <textarea id="taskDescription" placeholder="Add details about your task..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="taskTime">Task Time</label>
+                        <input type="time" id="taskTime" required>
+                    </div>
+                    
+                    <button type="submit" class="btn"><i class="fas fa-plus"></i> Add Task</button>
+                </form>
+            </div>
+            
+            <div class="panel">
+                <div class="panel-title">
+                    <i class="fas fa-list"></i> Your Tasks
+                    <button id="clearAllBtn" class="btn btn-warning" style="margin-left: auto; width: auto; padding: 10px 15px;">
+                        <i class="fas fa-trash-alt"></i> Clear All
+                    </button>
+                </div>
+                
+                <div class="tasks-container">
+                    <ul class="task-list" id="taskList">
+                        <li class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>No tasks yet</h3>
+                            <p>Add a task to get started!</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="notification" id="notification">
+            <button class="notification-close" id="closeNotification">&times;</button>
+            <div class="notification-title"><i class="fas fa-bell"></i> <span id="notificationTitle">Task Due!</span></div>
+            <div class="notification-content" id="notificationContent">Your task is due soon!</div>
+            <div class="notification-time" id="notificationTime"></div>
+        </div>
+        
+        <footer>
+            <p>Time-Based Task Manager &copy; 2023 | Tasks are saved in your browser</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const currentTimeEl = document.getElementById('currentTime');
+        const taskForm = document.getElementById('taskForm');
+        const taskList = document.getElementById('taskList');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const notification = document.getElementById('notification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationContent = document.getElementById('notificationContent');
+        const notificationTime = document.getElementById('notificationTime');
+        const closeNotification = document.getElementById('closeNotification');
+        
+        // Initialize tasks array from localStorage or create empty array
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            currentTimeEl.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        
+        // Save tasks to localStorage
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+        
+        // Add a new task
+        function addTask(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+            const dueTime = document.getElementById('taskTime').value;
+            
+            if (!title || !dueTime) return;
+            
+            const task = {
+                id: Date.now(),
+                title,
+                description,
+                dueTime,
+                completed: false,
+                notified: false
+            };
+            
+            tasks.push(task);
+            saveTasks();
+            renderTasks();
+            taskForm.reset();
+            
+            // Schedule notification check
+            scheduleNotificationCheck();
+        }
+        
+        // Render tasks to the DOM
+        function renderTasks() {
+            if (tasks.length === 0) {
+                taskList.innerHTML = `
+                    <li class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>No tasks yet</h3>
+                        <p>Add a task to get started!</p>
+                    </li>
+                `;
+                return;
+            }
+            
+            // Sort tasks by due time (earliest first)
+            tasks.sort((a, b) => {
+                const timeA = a.dueTime.split(':').map(Number);
+                const timeB = b.dueTime.split(':').map(Number);
+                return (timeA[0] * 60 + timeA[1]) - (timeB[0] * 60 + timeB[1]);
+            });
+            
+            taskList.innerHTML = tasks.map(task => {
+                const [hours, minutes] = task.dueTime.split(':').map(Number);
+                const now = new Date();
+                const dueDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+                const timeDiff = dueDate - now;
+                const minutesDiff = Math.floor(timeDiff / (1000 * 60));
+                
+                // Apply urgent style if due in less than 30 minutes
+                const isUrgent = minutesDiff < 30 && minutesDiff > 0;
+                const isOverdue = minutesDiff < 0;
+                
+                return `
+                    <li class="task-item ${isUrgent ? 'urgent' : ''}" data-id="${task.id}">
+                        ${isUrgent ? '<div class="alert-badge">URGENT</div>' : ''}
+                        <div class="task-title">${task.title}</div>
+                        ${task.description ? `<div class="task-desc">${task.description}</div>` : ''}
+                        <div class="task-meta">
+                            <div class="task-time">
+                                <i class="far fa-clock"></i> 
+                                ${task.dueTime}
+                                ${isOverdue ? ' (Overdue!)' : ''}
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-icon complete-btn" title="Mark as completed">
+                                <i class="fas fa-check"></i>
+                            </button>
+                            <button class="btn-icon delete-btn" title="Delete task">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.complete-btn').forEach(btn => {
+                btn.addEventListener('click', completeTask);
+            });
+            
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', deleteTask);
+            });
+        }
+        
+        // Complete task
+        function completeTask(e) {
+            const taskItem = e.target.closest('.task-item');
+            const taskId = parseInt(taskItem.dataset.id);
+            
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasks();
+            renderTasks();
+        }
+        
+        // Delete task
+        function deleteTask(e) {
+            const taskItem = e.target.closest('.task-item');
+            const taskId = parseInt(taskItem.dataset.id);
+            
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasks();
+            renderTasks();
+        }
+        
+        // Clear all tasks
+        function clearAllTasks() {
+            if (tasks.length === 0) return;
+            
+            if (confirm('Are you sure you want to delete all tasks?')) {
+                tasks = [];
+                saveTasks();
+                renderTasks();
+            }
+        }
+        
+        // Show notification
+        function showNotification(task) {
+            notificationTitle.textContent = task.title;
+            notificationContent.textContent = task.description || 'Your task is due soon!';
+            notificationTime.textContent = `Due at: ${task.dueTime}`;
+            
+            notification.classList.add('show');
+            
+            // Play notification sound
+            const audio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAAAAAAA=');
+            audio.play().catch(e => console.log("Audio play failed:", e));
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 10000);
+        }
+        
+        // Close notification
+        function closeNotificationHandler() {
+            notification.classList.remove('show');
+        }
+        
+        // Check for tasks that are due soon
+        function checkForDueTasks() {
+            const now = new Date();
+            const currentHours = now.getHours();
+            const currentMinutes = now.getMinutes();
+            
+            tasks.forEach(task => {
+                if (task.completed || task.notified) return;
+                
+                const [dueHours, dueMinutes] = task.dueTime.split(':').map(Number);
+                
+                // Calculate time difference in minutes
+                const minutesDiff = (dueHours - currentHours) * 60 + (dueMinutes - currentMinutes);
+                
+                // If task is due within the next minute and hasn't been notified
+                if (minutesDiff >= 0 && minutesDiff <= 1) {
+                    showNotification(task);
+                    task.notified = true;
+                    saveTasks();
+                }
+                
+                // Also show notification for overdue tasks that haven't been notified
+                if (minutesDiff < 0 && !task.notified) {
+                    showNotification({
+                        ...task,
+                        title: `OVERDUE: ${task.title}`
+                    });
+                    task.notified = true;
+                    saveTasks();
+                }
+            });
+        }
+        
+        // Schedule notification check every minute
+        function scheduleNotificationCheck() {
+            // Run immediately and then every minute
+            checkForDueTasks();
+            setInterval(checkForDueTasks, 60 * 1000);
+        }
+        
+        // Initialize the app
+        function initApp() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            renderTasks();
+            
+            // Event listeners
+            taskForm.addEventListener('submit', addTask);
+            clearAllBtn.addEventListener('click', clearAllTasks);
+            closeNotification.addEventListener('click', closeNotificationHandler);
+            
+            // Start notification scheduler
+            scheduleNotificationCheck();
+        }
+        
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
